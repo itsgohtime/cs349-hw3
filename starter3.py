@@ -7,6 +7,8 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
 
+from Q1 import Q1_Net
+
 def read_mnist(file_name):
     
     data_set = []
@@ -67,7 +69,40 @@ def classify_insurability():
     valid = read_insurability('three_valid.csv')
     test = read_insurability('three_test.csv')
     
-    # insert code to train simple FFNN and produce evaluation metrics
+    model = Q1_Net()
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+    n_epochs = 500
+    batch_size = 2
+    for epoch in range(n_epochs):
+        for i in range(0, len(train), batch_size):
+            X = torch.FloatTensor(train[i][1])
+            label = train[i][0]
+            y_target = torch.Tensor([0, 0, 0])
+            y_target[label] = 1.0
+            optimizer.zero_grad()
+            y_pred = model.forward(X)
+            loss = loss_fn(y_pred, y_target)
+            loss.backward()
+            optimizer.step()
+        print(f'Finished epoch {epoch}, latest loss {loss}')
+    
+    test = np.array(test, dtype=object)
+    test_features = test[:, 1]
+    test_labels = test[:, 0]
+    confusion_matrix = np.zeros((3, 3))
+    count = 0
+    for i in range(len(test_labels)):
+        X = torch.FloatTensor(test_features[i])
+        X = model.forward(X)
+        y_pred = model.softmax(X)
+        label = torch.argmax(y_pred)
+        confusion_matrix[label][test_labels[i]] += 1
+        if label.item() == test_labels[i][0]:
+            count += 1
+    print(f"The accuracy is {count/len(test_labels)}")
+    print(confusion_matrix)
     
 def classify_mnist():
     
@@ -100,9 +135,9 @@ def classify_insurability_manual():
     
 def main():
     classify_insurability()
-    classify_mnist()
-    classify_mnist_reg()
-    classify_insurability_manual()
+    # classify_mnist()
+    # classify_mnist_reg()
+    # classify_insurability_manual()
     
 if __name__ == "__main__":
     main()
