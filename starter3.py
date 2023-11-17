@@ -8,6 +8,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from Q1 import Q1_Net
+from Q2 import Q2_Net
 
 def read_mnist(file_name):
     
@@ -16,10 +17,10 @@ def read_mnist(file_name):
         for line in f:
             line = line.replace('\n','')
             tokens = line.split(',')
-            label = tokens[0]
+            label = int(tokens[0])
             attribs = []
             for i in range(784):
-                attribs.append(tokens[i+1])
+                attribs.append(float(tokens[i+1]))
             data_set.append([label,attribs])
     return(data_set)
         
@@ -109,10 +110,51 @@ def classify_mnist():
     train = read_mnist('mnist_train.csv')
     valid = read_mnist('mnist_valid.csv')
     test = read_mnist('mnist_test.csv')
-    show_mnist('mnist_test.csv','pixels')
-    
+
+    train = np.array(train, dtype=object)
+    train_features = train[:, 1]
+    train_features = reduce_dimension(train_features)
+    train_features = grayscale(train_features)
+
     # insert code to train a neural network with an architecture of your choice
     # (a FFNN is fine) and produce evaluation metrics
+    model = Q2_Net()
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+    n_epochs = 250
+    batch_size = 2
+    for epoch in range(n_epochs):
+        for i in range(0, len(train), batch_size):
+            X = torch.FloatTensor(train[i][1])
+            label = int(train[i][0])
+            y_target = torch.Tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            y_target[label] = 1.0
+            optimizer.zero_grad()
+            y_pred = model.forward(X)
+            loss = loss_fn(y_pred, y_target)
+            loss.backward()
+            optimizer.step()
+        print(f'Finished epoch {epoch}, latest loss {loss}')
+
+    test = np.array(test, dtype=object)
+    test_features = test[:, 1]
+    test_features = reduce_dimension(test_features)
+    test_features = grayscale(test_features)
+    test_labels = test[:, 0]
+    confusion_matrix = np.zeros((10, 10))
+    count = 0
+    for i in range(len(test_labels)):
+        X = torch.FloatTensor(test_features[i])
+        X = model.forward(X)
+        y_pred = model.softmax(X)
+        label = torch.argmax(y_pred)
+        confusion_matrix[label.item()][test_labels[i]] += 1
+        if label.item() == test_labels[i]:
+            count += 1
+    print(f"The accuracy is {count/len(test_labels)}")
+    print(confusion_matrix)
+
     
 def classify_mnist_reg():
     
@@ -131,11 +173,22 @@ def classify_insurability_manual():
     
     # reimplement classify_insurability() without using a PyTorch optimizer.
     # this part may be simpler without using a class for the FFNN
-    
+
+def reduce_dimension(features):
+    for i in range(len(features)):
+        features[i] = features[i][0::2]
+    return features
+
+def grayscale(features):
+    for i in range(len(features)):
+        for j in range(len(features[i])):
+            if features[i][j] > 0:
+                features[i][j] = 1
+    return features
     
 def main():
     classify_insurability()
-    # classify_mnist()
+    classify_mnist()
     # classify_mnist_reg()
     # classify_insurability_manual()
     
