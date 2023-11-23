@@ -7,11 +7,11 @@ import torch.nn.functional as F
 
 class Q1_Net(nn.Module):
 
-    def __init__(self):
+    def __init__(self, use_bias):
         super(Q1_Net, self).__init__()
-        self.lin1 = nn.Linear(3, 2, bias=False)
+        self.lin1 = nn.Linear(3, 2, bias=use_bias)
         self.sig = nn.Sigmoid()
-        self.lin2 = nn.Linear(2, 3, bias=False)
+        self.lin2 = nn.Linear(2, 3, bias=use_bias)
         self.soft = self.softmax
 
 
