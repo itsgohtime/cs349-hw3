@@ -100,10 +100,6 @@ def classify_insurability():
 
         loss_values.append(running_loss/(len(train) /batch_size))
         print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
-    
-    plt.plot(range(n_epochs), loss_values, label='training data')
-    plt.legend()
-    plt.show()
 
     test = np.array(test, dtype=object)
     test_features = test[:, 1]
@@ -133,6 +129,12 @@ def classify_insurability():
 
     print(f"The F1 Score is {m.f1_score(binary_pred, binary_test, average='micro')}")
     print(confusion_matrix)
+
+    plt.plot(range(n_epochs), loss_values, label='training data')
+    plt.xlabel('Epochs'); plt.ylabel('Loss')
+    plt.title('Learning Curve')
+    plt.legend()
+    plt.show()
     
 def classify_mnist():
     
@@ -170,10 +172,6 @@ def classify_mnist():
         loss_values.append(running_loss/(len(train) /batch_size))
         print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
 
-    plt.plot(range(n_epochs), loss_values, label='training data')
-    plt.legend()
-    plt.show()
-
     test = np.array(test, dtype=object)
     test_features = test[:, 1]
     test_features = reduce_dimension(test_features)
@@ -203,6 +201,12 @@ def classify_mnist():
 
     print(f"The F1 Score is {m.f1_score(binary_pred, binary_test, average='micro')}")
     print(confusion_matrix)
+
+    plt.plot(range(n_epochs), loss_values, label='training data')
+    plt.xlabel('Epochs'); plt.ylabel('Loss')
+    plt.title('Learning Curve')
+    plt.legend()
+    plt.show()
 
 def classify_mnist_reg():
     
@@ -241,10 +245,6 @@ def classify_mnist_reg():
         loss_values.append(running_loss/(len(train) /batch_size))
         print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
 
-    plt.plot(range(n_epochs), loss_values, label='training data')
-    plt.legend()
-    plt.show()
-
     test = np.array(test, dtype=object)
     test_features = test[:, 1]
     test_features = reduce_dimension(test_features)
@@ -276,6 +276,13 @@ def classify_mnist_reg():
 
     print(f"The F1 Score is {m.f1_score(binary_pred, binary_test, average='micro')}")
     print(confusion_matrix)
+
+    plt.plot(range(n_epochs), loss_values, label='training data')
+    plt.xlabel('Epochs'); plt.ylabel('Loss')
+    plt.title('Learning Curve')
+    plt.legend()
+    plt.show()
+
 
 def classify_insurability_manual():
     
