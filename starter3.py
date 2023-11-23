@@ -72,7 +72,7 @@ def classify_insurability():
     valid = read_insurability('three_valid.csv')
     test = read_insurability('three_test.csv')
     
-    n_epochs = 300
+    n_epochs = 500
     batch_size = 2
     learning_rate = 0.01
     use_bias = True
@@ -81,7 +81,12 @@ def classify_insurability():
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
+    valid = np.array(valid, dtype=object)
+    valid_features = valid[:, 1]
+    valid_labels = valid[:, 0]
+
     loss_values = []
+    loss_valid = []
     for epoch in range(n_epochs):
         running_loss = 0.0
         count = 0
@@ -96,9 +101,20 @@ def classify_insurability():
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-
-
+        
+        valid_loss = 0.0
+        for i in range(0, len(valid), batch_size):
+            X = torch.FloatTensor(valid_features[i])
+            label = valid_labels[i]
+            y_target = torch.Tensor([0, 0, 0])
+            y_target[label] = 1
+            optimizer.zero_grad()
+            y_pred = model.forward(X)
+            loss = loss_fn(y_pred, y_target)
+            valid_loss += loss.item()
+        
         loss_values.append(running_loss/(len(train) /batch_size))
+        loss_valid.append(valid_loss/(len(valid)/batch_size))
         print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
 
     test = np.array(test, dtype=object)
@@ -131,6 +147,7 @@ def classify_insurability():
     print(confusion_matrix)
 
     plt.plot(range(n_epochs), loss_values, label='training data')
+    plt.plot(range(n_epochs), loss_valid, label='validation data')
     plt.xlabel('Epochs'); plt.ylabel('Loss')
     plt.title('Learning Curve')
     plt.legend()
@@ -147,6 +164,13 @@ def classify_mnist():
     train_features = reduce_dimension(train_features)
     train_features = grayscale(train_features)
 
+    valid = np.array(valid, dtype=object)
+    valid_features = valid[:, 1]
+    valid_features = reduce_dimension(valid_features)
+    valid_features = grayscale(valid_features)
+    valid_labels = valid[:, 0]
+
+
     # insert code to train a neural network with an architecture of your choice
     # (a FFNN is fine) and produce evaluation metrics
     model = Q2_Net()
@@ -156,6 +180,7 @@ def classify_mnist():
     n_epochs = 100
     batch_size = 2
     loss_values = []
+    loss_valid = []
     for epoch in range(n_epochs):
         running_loss = 0.0
         for i in range(0, len(train), batch_size):
@@ -169,7 +194,20 @@ def classify_mnist():
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+
+        valid_loss = 0.0
+        for i in range(0, len(valid), batch_size):
+            X = torch.FloatTensor(valid_features[i])
+            label = valid_labels[i]
+            y_target = torch.Tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            y_target[label] = 1
+            optimizer.zero_grad()
+            y_pred = model.forward(X)
+            loss = loss_fn(y_pred, y_target)
+            valid_loss += loss.item()
+        
         loss_values.append(running_loss/(len(train) /batch_size))
+        loss_valid.append(valid_loss/(len(valid)/batch_size))
         print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
 
     test = np.array(test, dtype=object)
@@ -203,6 +241,7 @@ def classify_mnist():
     print(confusion_matrix)
 
     plt.plot(range(n_epochs), loss_values, label='training data')
+    plt.plot(range(n_epochs), loss_valid, label='validation data')
     plt.xlabel('Epochs'); plt.ylabel('Loss')
     plt.title('Learning Curve')
     plt.legend()
@@ -218,7 +257,13 @@ def classify_mnist_reg():
     train_features = train[:, 1]
     train_features = reduce_dimension(train_features)
     train_features = grayscale(train_features)
-    
+
+    valid = np.array(valid, dtype=object)
+    valid_features = valid[:, 1]
+    valid_features = reduce_dimension(valid_features)
+    valid_features = grayscale(valid_features)
+    valid_labels = valid[:, 0]
+
     # add a regularizer of your choice to classify_mnist()
     model = Q2_Net()
     dropout = nn.Dropout(0.2)
@@ -228,6 +273,7 @@ def classify_mnist_reg():
     n_epochs = 100
     batch_size = 2
     loss_values = []
+    loss_valid = []
     for epoch in range(n_epochs):
         running_loss = 0.0
         for i in range(0, len(train), batch_size):
@@ -242,7 +288,19 @@ def classify_mnist_reg():
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+
+        valid_loss = 0.0
+        for i in range(0, len(valid), batch_size):
+            X = torch.FloatTensor(valid_features[i])
+            label = valid_labels[i]
+            y_target = torch.Tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+            y_target[label] = 1
+            optimizer.zero_grad()
+            y_pred = model.forward(X)
+            loss = loss_fn(y_pred, y_target)
+            valid_loss += loss.item()
         loss_values.append(running_loss/(len(train) /batch_size))
+        loss_valid.append(valid_loss/(len(valid)/batch_size))
         print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
 
     test = np.array(test, dtype=object)
@@ -278,10 +336,11 @@ def classify_mnist_reg():
     print(confusion_matrix)
 
     plt.plot(range(n_epochs), loss_values, label='training data')
+    plt.plot(range(n_epochs), loss_valid, label='validation data')
     plt.xlabel('Epochs'); plt.ylabel('Loss')
     plt.title('Learning Curve')
     plt.legend()
-    plt.show()
+    # plt.show()
 
 
 def classify_insurability_manual():
