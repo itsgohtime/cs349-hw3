@@ -2,6 +2,7 @@ import sys
 import random
 import math
 import numpy as np
+import sklearn.metrics as m
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -71,7 +72,7 @@ def classify_insurability():
     valid = read_insurability('three_valid.csv')
     test = read_insurability('three_test.csv')
     
-    n_epochs = 500
+    n_epochs = 300
     batch_size = 2
     learning_rate = 0.01
     use_bias = True
@@ -98,7 +99,7 @@ def classify_insurability():
 
 
         loss_values.append(running_loss/(len(train) /batch_size))
-        print(f'Finished epoch {epoch}, latest loss {loss}')
+        print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
     
     plt.plot(range(n_epochs), loss_values, label='training data')
     plt.legend()
@@ -108,7 +109,6 @@ def classify_insurability():
     test_features = test[:, 1]
     test_labels = test[:, 0]
     confusion_matrix = np.zeros((3, 3))
-    count = 0
     pred_labels = []
     for i in range(len(test_labels)):
         X = torch.FloatTensor(test_features[i])
@@ -117,11 +117,21 @@ def classify_insurability():
         label = torch.argmax(y_pred)
         pred_labels.append(label)
         confusion_matrix[label][test_labels[i]] += 1
-        if label.item() == test_labels[i][0]:
-            count += 1
 
-    # print(f"The F1 Score is {MultiClassF1Score(pred_labels, test_labels, num_classes=3)}")
-    print(f"The accuracy is {count/len(test_labels)}")
+
+    binary_pred = []
+    binary_test = []
+    for i in range(len(pred_labels)):
+        y_target = [0, 0, 0]
+        y_target[test_labels[i][0]] = 1.0
+        binary_test.append(y_target)
+
+        y_target = [0, 0, 0]
+        y_target[pred_labels[i]] = 1.0
+        binary_pred.append(y_target)
+
+
+    print(f"The F1 Score is {m.f1_score(binary_pred, binary_test, average='micro')}")
     print(confusion_matrix)
     
 def classify_mnist():
@@ -158,7 +168,7 @@ def classify_mnist():
             optimizer.step()
             running_loss += loss.item()
         loss_values.append(running_loss/(len(train) /batch_size))
-        print(f'Finished epoch {epoch}, latest loss {loss}')
+        print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
 
     plt.plot(range(n_epochs), loss_values, label='training data')
     plt.legend()
@@ -169,20 +179,31 @@ def classify_mnist():
     test_features = reduce_dimension(test_features)
     test_features = grayscale(test_features)
     test_labels = test[:, 0]
+    pred_labels = []
     confusion_matrix = np.zeros((10, 10))
-    count = 0
     for i in range(len(test_labels)):
         X = torch.FloatTensor(test_features[i])
         X = model.forward(X)
         y_pred = model.softmax(X)
         label = torch.argmax(y_pred)
+        pred_labels.append(label)
         confusion_matrix[label.item()][test_labels[i]] += 1
-        if label.item() == test_labels[i]:
-            count += 1
-    print(f"The accuracy is {count/len(test_labels)}")
+
+    binary_pred = []
+    binary_test = []
+    for i in range(len(pred_labels)):
+        y_target = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        y_target[test_labels[i]] = 1.0
+        binary_test.append(y_target)
+
+        y_target = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        y_target[pred_labels[i]] = 1.0
+        binary_pred.append(y_target)
+
+
+    print(f"The F1 Score is {m.f1_score(binary_pred, binary_test, average='micro')}")
     print(confusion_matrix)
 
-    
 def classify_mnist_reg():
     
     train = read_mnist('mnist_train.csv')
@@ -195,7 +216,6 @@ def classify_mnist_reg():
     train_features = grayscale(train_features)
     
     # add a regularizer of your choice to classify_mnist()
-    
     model = Q2_Net()
     dropout = nn.Dropout(0.2)
     loss_fn = nn.CrossEntropyLoss()
@@ -219,7 +239,7 @@ def classify_mnist_reg():
             optimizer.step()
             running_loss += loss.item()
         loss_values.append(running_loss/(len(train) /batch_size))
-        print(f'Finished epoch {epoch}, latest loss {loss}')
+        print(f'Finished epoch {epoch+1}/{n_epochs}, latest loss {loss}')
 
     plt.plot(range(n_epochs), loss_values, label='training data')
     plt.legend()
@@ -231,20 +251,32 @@ def classify_mnist_reg():
     test_features = grayscale(test_features)
     test_labels = test[:, 0]
     confusion_matrix = np.zeros((10, 10))
-    count = 0
+    pred_labels = []
     for i in range(len(test_labels)):
         X = torch.FloatTensor(test_features[i])
         X = dropout(X)
         X = model.forward(X)
         y_pred = model.softmax(X)
         label = torch.argmax(y_pred)
+        pred_labels.append(label)
         confusion_matrix[label.item()][test_labels[i]] += 1
-        if label.item() == test_labels[i]:
-            count += 1
-    print(f"The accuracy is {count/len(test_labels)}")
+
+
+    binary_pred = []
+    binary_test = []
+    for i in range(len(pred_labels)):
+        y_target = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        y_target[test_labels[i]] = 1.0
+        binary_test.append(y_target)
+
+        y_target = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        y_target[pred_labels[i]] = 1.0
+        binary_pred.append(y_target)
+
+
+    print(f"The F1 Score is {m.f1_score(binary_pred, binary_test, average='micro')}")
     print(confusion_matrix)
 
-    
 def classify_insurability_manual():
     
     train = read_insurability('three_train.csv')
